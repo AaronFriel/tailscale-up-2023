@@ -1,0 +1,12 @@
+{
+    "name": "tailscale-up-2023-app",
+    "main": "index.ts",
+    "devDependencies": {
+        "@types/node": "^16.18.33"
+    },
+    "dependencies": {
+        "@pulumi/docker": "^4.2.3",
+        "@pulumi/kubernetes": "^3.28.1",
+        "@pulumi/pulumi": "^3.0.0"
+    }
+}
