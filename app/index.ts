@@ -32,10 +32,9 @@ tailscale(k8sProvider, clusterIP);
 
 /* End tailscale */
 
-
 const registryUrl = infraConfig.getOutput('registryUrl') as pulumi.Output<string>;
 
-const imageName = registryUrl.apply((url) => `${url}/tailscale-up-awesome-app:guin-dev`);
+const imageName = registryUrl.apply((url) => `${url}/tailscale-up-awesome-app:latest`);
 
 const image = new docker.Image('my-image', {
   imageName: imageName,
@@ -47,10 +46,15 @@ const image = new docker.Image('my-image', {
 
 const appLabels = { app: 'awesome-app' };
 
+const namespace = new k8s.core.v1.Namespace("awesome-app");
+
 const deployment = new k8s.apps.v1.Deployment(
   'awesome-app',
   {
-    metadata: { labels: appLabels },
+    metadata: {
+      namespace: namespace.metadata.name,
+      labels: appLabels
+    },
     spec: {
       selector: { matchLabels: appLabels },
       template: {
@@ -67,20 +71,23 @@ const deployment = new k8s.apps.v1.Deployment(
       },
     },
   },
-  { provider: k8sProvider, dependsOn: [image] },
+  { provider: k8sProvider, dependsOn: [image], deletedWith: namespace },
 );
 
 const service = new k8s.core.v1.Service(
   'awesome-app',
   {
-    metadata: { labels: appLabels },
+    metadata: {
+      namespace: namespace.metadata.name,
+      labels: appLabels
+    },
     spec: {
       type: 'LoadBalancer',
       selector: appLabels,
       ports: [{ port: 80, targetPort: 80 }],
     },
   },
-  { provider: k8sProvider, dependsOn: [deployment] },
+  { provider: k8sProvider, dependsOn: [deployment], deletedWith: namespace },
 );
 
 export const url = service.status.apply((s) => s.loadBalancer.ingress[0].ip);

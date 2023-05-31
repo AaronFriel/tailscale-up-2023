@@ -26,28 +26,7 @@ export function tailscale(k8sProvider: k8s.Provider, clusterIP: pulumi.Output<st
     stringData: {
       AUTH_KEY: tailscaleKey,
     },
-  }, { provider: k8sProvider });
-
-//   const postUp = clusters.apply((clusters) => {
-//     let rules = '';
-
-//     for (const cluster of clusters) {
-//       if (cluster.clusterName === clusterName) {
-//         // skip mapping to own cluster.
-//         continue;
-//       }
-//       rules += `
-// /opt/tailscale/add-proxy.sh "${cluster.clusterName}" "${cluster.tailscalePort}" &
-// `;
-//     }
-
-//     return pulumi.interpolate`#!/bin/sh
-// ${rules}
-
-// echo "Adding iptables rule for source NAT to remote Kubernetes clusters"
-// iptables -A POSTROUTING -t nat --match mark --mark 1 -j SNAT --to-source "$(tailscale --socket=/tmp/tailscaled.sock ip -4)" --wait
-//     `;
-//   });
+  }, { provider: k8sProvider, deletedWith: namespace });
 
   const configMap = new k8s.core.v1.ConfigMap('tailscale', {
     metadata: {
@@ -57,11 +36,8 @@ export function tailscale(k8sProvider: k8s.Provider, clusterIP: pulumi.Output<st
       'run.sh': readFile(path.join(__dirname, './scripts/run.sh'), {
         encoding: 'utf-8',
       }),
-      'add-proxy.sh': readFile(path.join(__dirname, './scripts/add-proxy.sh'), {
-        encoding: 'utf-8',
-      }),
     },
-  }, { provider: k8sProvider });
+  }, { provider: k8sProvider, deletedWith: namespace });
 
   const { serviceAccount } = tailscaleRbac(k8sProvider, namespace);
 
@@ -80,7 +56,7 @@ export function tailscale(k8sProvider: k8s.Provider, clusterIP: pulumi.Output<st
       clusterIP: 'None',
       selector: tailscaleLabels,
     },
-  }, { provider: k8sProvider });
+  }, { provider: k8sProvider, deletedWith: namespace });
 
   new k8s.apps.v1.StatefulSet('tailscale', {
     metadata: {
@@ -158,7 +134,7 @@ export function tailscale(k8sProvider: k8s.Provider, clusterIP: pulumi.Output<st
         },
       },
     },
-  }, { provider: k8sProvider });
+  }, { provider: k8sProvider, deletedWith: namespace });
 
   return {};
 }
@@ -168,7 +144,7 @@ function tailscaleRbac(k8sProvider: k8s.Provider, namespace: k8s.core.v1.Namespa
     metadata: {
       namespace: namespace.metadata.name,
     },
-  }, { provider: k8sProvider });
+  }, { provider: k8sProvider, deletedWith: namespace });
 
   const role = new k8s.rbac.v1.Role('tailscale', {
     metadata: {
@@ -187,7 +163,7 @@ function tailscaleRbac(k8sProvider: k8s.Provider, namespace: k8s.core.v1.Namespa
         verbs: ['get', 'update'],
       },
     ],
-  }, { provider: k8sProvider });
+  }, { provider: k8sProvider, deletedWith: namespace });
 
   new k8s.rbac.v1.RoleBinding('tailscale', {
     metadata: {
@@ -204,7 +180,7 @@ function tailscaleRbac(k8sProvider: k8s.Provider, namespace: k8s.core.v1.Namespa
       name: role.metadata.name,
       apiGroup: 'rbac.authorization.k8s.io',
     },
-  }, { provider: k8sProvider });
+  }, { provider: k8sProvider, deletedWith: namespace });
 
   return { serviceAccount };
 }

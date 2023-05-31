@@ -17,54 +17,26 @@ export = async () => {
       resourceLabels: {
         owner: "friel-and-guin",
       },
-      // loggingConfig: {
-      //   enableComponents: ['SYSTEM_COMPONENTS', 'WORKLOADS'],
-      // },
-      // monitoringConfig: {
-      //   enableComponents: ['SYSTEM_COMPONENTS'],
-      // },
-      // networkingMode: 'VPC_NATIVE',
       ipAllocationPolicy: {},
-      // datapathProvider: 'ADVANCED_DATAPATH',
-      // privateClusterConfig: {
-      //   enablePrivateEndpoint: false,
-      //   enablePrivateNodes: true,
-      //   masterIpv4CidrBlock: localConfig.masterIpv4CidrBlock,
-      // },
       masterAuthorizedNetworksConfig: {
         cidrBlocks: [
           {
-            // displayName: 'local-ip',
-            // cidrBlock: `${ipv4Ip}/32`,
-
-
-            // displayName: 'public-internet',
-            // cidrBlock: `0.0.0.0/0`,
-
-            displayName: "office-wlan",
-            cidrBlock: `192.168.1.0/24`,
+            displayName: 'local-ip',
+            cidrBlock: `${ipv4Ip}/32`,
           },
+          {
+            displayName: 'public-internet',
+            cidrBlock: `0.0.0.0/0`,
+          },
+          // {
+          //   displayName: "office-wan-ip",
+          //   cidrBlock: `192.168.1.0/24`, // fake
+          // },
         ],
       },
       initialNodeCount: 1,
     },
   );
-
-  // for (const nodePoolConfig of localConfig.nodePools) {
-  //   new NodePool(
-  //     nodePoolConfig.name,
-  //     {
-  //       cluster: gkeCluster.name,
-  //       location: localConfig.location,
-  //       initialNodeCount: nodePoolConfig.initialNodeCount,
-  //       nodeConfig: {
-  //         imageType: 'cos_containerd',
-  //         machineType: nodePoolConfig.machineType,
-  //       },
-  //     },
-  //     { ignoreChanges: ['initialNodeCount'] },
-  //   );
-  // }
 
   const contextName = pulumi.interpolate`gke-${gkeCluster.name}`;
 
@@ -107,12 +79,9 @@ current-context: gke-${contextName}
     name: gkeCluster.name,
     location: gkeCluster.location,
     clusterIP: gkeCluster.endpoint,
-    // locationType: localConfig.locationType,
     project: gkeCluster.project,
     authorizedIp: ipv4Ip,
-    // network: assertOutputNonNull(gkeCluster.network),
     kubeconfig,
     registryUrl,
-    // nodeTag,
   };
 }
